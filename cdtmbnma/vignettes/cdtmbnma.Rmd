@@ -1,0 +1,92 @@
+---
+title: "Dose-dependent interaction on a real network: sacubitril and valsartan"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Dose-dependent interaction on a real network: sacubitril and valsartan}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+run_stan <- requireNamespace("cmdstanr", quietly = TRUE) ||
+            requireNamespace("rstan", quietly = TRUE)
+```
+
+This vignette reproduces the sacubitril and valsartan blood-pressure analysis
+from the methods paper. The network combines a valsartan dose-ranging axis, a
+fixed-ratio combination diagonal, and the RATIO trial's off-diagonal arms, which
+vary free sacubitril on a fixed valsartan backbone. The off-diagonal arms are
+what make the interaction estimable.
+
+## The data
+
+Each row is one trial arm. The two component dose columns, `d_sac` and `d_val`,
+carry the sacubitril and valsartan-equivalent doses, with zero meaning the
+component is absent.
+
+```{r data}
+library(cdtmbnma)
+sv <- sacval_example()
+head(sv)
+```
+
+## Building the design
+
+`cdt_data()` turns the arm-level table into the model design. The all-zero arm
+in each study becomes the baseline, and the two components co-occur in the
+combination arms, so one interaction pair is created.
+
+```{r design}
+d <- cdt_data(sv, study = "study", components = c("d_sac", "d_val"),
+              outcome = "continuous", y = "y", se = "se",
+              dstar = c(d_sac = 200, d_val = 320))
+d
+```
+
+## Fitting
+
+`cdt_fit()` compiles the Stan model on first use and samples. The bilinear
+surface is the default. The reference doses passed as `dstar` set the dose
+normalisation, so the interaction parameter reads as the effect at sacubitril
+200 mg with valsartan 320 mg.
+
+```{r fit, eval = run_stan}
+fit <- cdt_fit(d, interaction = "bilinear", chains = 4,
+               iter_warmup = 1000, iter_sampling = 1000, seed = 1)
+summary(fit)
+```
+
+The component dose-response curves recover the expected shapes, valsartan
+saturating early and the sacubitril add-on rising across the observed range.
+
+```{r plot, eval = run_stan, fig.width = 7, fig.height = 3.2}
+plot(fit)
+```
+
+## Prediction at an unobserved combination
+
+`predict()` returns the relative effect against placebo at any dose
+combination, including pairs that no trial observed. Here is the combination of
+sacubitril 100 mg with valsartan 160 mg, which the diagonal and off-diagonal
+arms bracket but never hit directly.
+
+```{r predict, eval = run_stan}
+predict(fit, newdata = data.frame(d_sac = 100, d_val = 160))
+```
+
+## Reading the interaction
+
+A positive interaction on this outcome scale means sub-additivity, since lower
+blood pressure is the benefit and the outcome is the change from baseline. The
+paper reports the estimate as directionally sub-additive but not conclusive on
+the off-diagonal evidence, and cautions that pooling fixed-ratio diagonal trials
+inflates the apparent precision. Refitting with `interaction = "none"` gives the
+additive benchmark, and comparing the two with `loo` on the stored `log_lik`
+quantifies what the interaction buys.
+
+```{r additive, eval = FALSE}
+fit0 <- cdt_fit(d, interaction = "none")
+# loo::loo_compare(loo::loo(fit$fit$draws("log_lik")),
+#                  loo::loo(fit0$fit$draws("log_lik")))
+```
