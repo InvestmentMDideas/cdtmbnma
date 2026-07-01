@@ -3,7 +3,7 @@ Type: Package
 Title: Component, Dose, and Time Network Meta-Analysis with Dose-Dependent Interaction
 Version: 0.1.0
 Authors@R:
-    person("Tyler", "Pitre", email = "first.last@example.com", role = c("aut", "cre"))
+    person("Tyler", "Pitre", email = "pitretmed@gmail.com", role = c("aut", "cre"))
 Description: Arm-based component network meta-analysis that decomposes each
     treatment arm into component-specific dose-response curves and models the
     interaction between two components as a function of the doses of both, a
