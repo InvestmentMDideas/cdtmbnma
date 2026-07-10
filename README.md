@@ -20,7 +20,7 @@ trial observed.
 | Path | Description |
 |------|-------------|
 | `cdtmbnma/` | Source of the `cdtmbnma` R package (arm-based component dose-response NMA with a dose-dependent interaction surface, estimated in Stan). |
-| `cdtmbnma_0.1.0.tar.gz` | Built source tarball of the package, version 0.1.0. |
+| `cdtmbnma_0.2.1.tar.gz` | Built source tarball of the package, version 0.2.1. |
 | `data/sacval_msSBP_doseplane.csv` | Sacubitril–valsartan sitting-SBP dose plane analysed in the paper (one row per trial arm). |
 | `data/copd_bgf_extraction_form.csv` | Arm-level extraction skeleton for the COPD triple-therapy (budesonide / glycopyrronium / formoterol) network. |
 | `data/copd_bgf_data_dictionary.csv` | Field definitions and extraction rules for the COPD extraction form. |
@@ -98,7 +98,7 @@ column per component and `0` encoding an absent component:
 
 ## Status
 
-Version 0.1.0 is a source release. The general Stan model generalises a two-component
+Version 0.2.1 is a source release. The general Stan model generalises a two-component
 implementation that was validated by parameter recovery against a known generating
 process, and the R interface and tests are written against that model. Build and check
 the package on a machine with R and a Stan backend before relying on results.
